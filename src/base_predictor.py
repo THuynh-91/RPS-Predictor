@@ -104,9 +104,11 @@ class RPSPredictor(ABC):
     # Return metrics of the matches (check doc for specifics)
     def get_stats(self) -> dict[str, float | int]:
         total = self.wins + self.losses + self.ties
+        decisive_games = self.wins + self.losses
         
+        # Win rate should be on actual wins vs losses not total games
         if total > 0:
-            win_rate = (self.wins / total)
+            win_rate = (self.wins / decisive_games)
         else:
             win_rate = 0.0
 
@@ -127,7 +129,7 @@ class RPSPredictor(ABC):
 
     # --- helpers ---
 
-    # Updates win/loss/tie counter
+    # Increment win/loss/tie counter based on result
     def _bump_score(self, result: str) -> None:
         if result == 'win':
             self.wins += 1

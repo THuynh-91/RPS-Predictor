@@ -15,8 +15,6 @@ class RandomPredictor(RPSPredictor):
     Check documentation in 'base_predictor.py'
     '''
 
-    # Needs to implement the core methods.
-
     def __init__(self):
         super().__init__()
         

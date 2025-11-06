@@ -18,10 +18,24 @@ class RandomPredictor(RPSPredictor):
     # Needs to implement the core methods.
 
     def __init__(self):
-        pass
-
+        super().__init__()
+        
+    # Randomly predicts the player's move and returns the counter    
     def predict(self):
-        pass
+        predicted_player_move = random.choice(self.MOVES)
+        return self.counter(predicted_player_move)
 
+    # No need to track history, just update scoreboard
     def update(self, player_move: str, ai_move: str) -> None:
-        pass
+        self._record_round(player_move, ai_move)
+
+
+if __name__ == "__main__":
+    print("TEST:\n")
+
+    predictor = RandomPredictor()
+
+    print('5 Random Moves')
+    for i in range(1, 6):
+        move = predictor.predict()
+        print(f'Move {i}: {move}')

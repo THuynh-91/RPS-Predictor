@@ -81,3 +81,5 @@ if __name__ == "__main__":
 
     stats = predictor.get_stats()
     print("UPDATED STATS\n",stats)
+    # Typically 33% all around, and is to be expected with randomness. 
+    # Might perform differently against different behaviors.

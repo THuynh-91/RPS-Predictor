@@ -22,7 +22,7 @@ class RPSGame:
         '''
 
         print("="*50)
-        print("GAME START")
+        print(" "* (25 - len("GAME START")//2) + "GAME START")
         print("="*50)
         print("\nCommands:")
         print("  R, P, S - Make your move")
@@ -36,7 +36,7 @@ class RPSGame:
 
             if user_input == "Q":
                 print("\n" + "="*50)
-                print("GAME OVER")
+                print(" "* (25 - len("GAME OVER")//2) + "GAME OVER")
                 print("="*50)
                 self._show_final_stats()
                 break
@@ -80,7 +80,7 @@ class RPSGame:
         stats = self.predictor.get_stats()
         
         print("\n" + "="*50)
-        print(" "*25 + "CURRENT STATISTICS")
+        print(" "* (25 - len("CURRENT STATISTICS")//2) + "CURRENT STATISTICS")
         print("="*50)
         print(f" Model:          {self.predictor.__class__.__name__}")
         print(f" Total Games:    {stats['total_games']}")
@@ -94,7 +94,7 @@ class RPSGame:
         # Shows final stats when game ends
         stats = self.predictor.get_stats()
         
-        print(f" Model: {self.predictor.__class__.__name__}")
+        print(f"Model: {self.predictor.__class__.__name__}")
         print(f"\nTotal Games Played: {stats['total_games']}")
         print(f"\nFinal Score:")
         print(f" AI:    {stats['wins']} wins")

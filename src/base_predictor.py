@@ -107,17 +107,22 @@ class RPSPredictor(ABC):
         decisive_games = self.wins + self.losses
         
         # Win rate should be on actual wins vs losses not total games
-        if total > 0:
-            win_rate = (self.wins / decisive_games)
+        if decisive_games > 0:
+            ai_win_rate = self.wins / decisive_games
+            player_win_rate = self.losses / decisive_games
         else:
-            win_rate = 0.0
+            ai_win_rate = 0.0
+            player_win_rate = 0.0
 
         return {
             'wins': self.wins,
             'losses': self.losses,
             'ties': self.ties,
             'total_games': total,
-            'win_rate': win_rate
+            'ai_win_rate': ai_win_rate,
+            'ai_win_rate_percent': f"{ai_win_rate * 100:.1f}%",
+            'player_win_rate': player_win_rate,  
+            'player_win_rate_percent': f"{player_win_rate * 100:.1f}%" 
         }
     
     # Clears history and resets scoreboard

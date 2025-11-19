@@ -1,6 +1,7 @@
 from random_predictor import RandomPredictor
 from markov_predictor import MarkovPredictor
 from qlearning_predictor import QLearningPredictor
+from counter_move_player import CounterMovePlayer
 
 '''
 Game Controller
@@ -9,11 +10,12 @@ CLI game for testing... (will discuss if we want to make a web and host)
 '''
 
 class RPSGame:
-    def __init__(self, predictor):
+    def __init__(self, player, predictor):
+        self.player = player
         self.predictor = predictor
         self.round_number = 0
 
-    def play_interactive(self):
+    def play_interactive(self, rounds: int = 0):
         '''
         Main interactive game loop.
         Moves: R, P, S
@@ -29,10 +31,11 @@ class RPSGame:
         print("  STATS   - Show statistics")
         print("  Q       - Quit game\n")
 
-        while True:
+        while rounds == 0 or self.round_number < rounds:
             self.round_number += 1
             # Player Input
-            user_input = input(f"Round {self.round_number} - Your move: ").upper().strip()
+            user_input = self.player.get_move()
+            print(f"Round {self.round_number}: You played {user_input}")
 
             if user_input == "Q":
                 print("\n" + "="*50)
@@ -54,6 +57,7 @@ class RPSGame:
 
             ai_move = self.predictor.predict()
             self.predictor.update(user_input, ai_move)
+            self.player.observe(ai_move)
             self._show_round_result(user_input, ai_move)
 
     def _show_round_result(self, player_move, ai_move):
@@ -135,12 +139,19 @@ def main():
 
     elif choice == '3':
         predictor = QLearningPredictor()
+        episodes = input("\nHow many training episodes? (Press Enter for 10000): ")
+        if not episodes:
+            episodes = 10000
+        else:
+            episodes = int(episodes)
+        predictor.train_against(CounterMovePlayer(), episodes)
         print("\nQ-Learning selected successfully!\n")
     else:
         print("Invalid choice")
 
-    game = RPSGame(predictor)
-    game.play_interactive()
+    player = CounterMovePlayer()
+    game = RPSGame(player, predictor)
+    game.play_interactive(10)
 
 
 

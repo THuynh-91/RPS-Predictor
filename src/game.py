@@ -59,6 +59,7 @@ class RPSGame:
             self.predictor.update(user_input, ai_move)
             self.player.observe(ai_move)
             self._show_round_result(user_input, ai_move)
+            self.predictor._record_round(user_input, ai_move)
 
     def _show_round_result(self, player_move, ai_move):
         symbols = {
@@ -117,6 +118,10 @@ class RPSGame:
         print("\nThanks for playing!\n")
 
 def main():
+    q_alpha = None
+    q_gamma = 0.9
+    q_epsilon = 1.0
+    q_decay = 0.999
     text = "ROCK PAPER SCISSORS PREDICTOR"
     print("-"*50)
     print(" "* (25 - len(text)//2) + text)
@@ -138,20 +143,22 @@ def main():
         print("\nMarkov Chain selected successfully!\n")
 
     elif choice == '3':
-        predictor = QLearningPredictor()
-        episodes = input("\nHow many training episodes? (Press Enter for 10000): ")
-        if not episodes:
-            episodes = 10000
-        else:
-            episodes = int(episodes)
-        predictor.train_against(CounterMovePlayer(), episodes)
+        predictor = QLearningPredictor(q_alpha, q_gamma, q_epsilon, q_decay)
+        if not predictor.trained:
+            episodes = input("\nHow many training episodes? (Press Enter for 10000): ")
+            if not episodes:
+                episodes = 10000
+            else:
+                episodes = int(episodes)
+            predictor.train_against(CounterMovePlayer(), episodes)
         print("\nQ-Learning selected successfully!\n")
     else:
         print("Invalid choice")
 
     player = CounterMovePlayer()
     game = RPSGame(player, predictor)
-    game.play_interactive(10)
+    game.play_interactive(100)
+    game._show_final_stats()
 
 
 

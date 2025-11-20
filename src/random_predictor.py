@@ -29,18 +29,20 @@ class RandomPredictor(RPSPredictor):
 
 
 if __name__ == "__main__":
-    print("TEST:\n")
+    print("MARKOV TESTING")
     predictor = RandomPredictor()
-    
-    print('5 Random Games:')
-    for i in range(1, 6):
+    stats = predictor.get_stats()
+    print("Stats", stats)
+
+    for i in range(100000):
         ai_move = predictor.predict()
         player_move = random.choice(['R', 'P', 'S'])
-        
-        print(f"player_move='{player_move}")
-        print(f"ai_move='{ai_move}")
-        
         predictor.update(player_move, ai_move)
-        
+
         result = predictor.get_result(player_move, ai_move)
-        print(f'Round {i}: Player={player_move}, AI={ai_move} | {result.upper()}\n')
+        print(f'Round {i+1}: Player={player_move}, AI={ai_move} | {result.upper()}\n')
+
+    stats = predictor.get_stats()
+    print("UPDATED STATS\n",stats)
+
+    #Should be 33% All Around as well. 

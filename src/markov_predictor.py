@@ -28,36 +28,34 @@ class MarkovPredictor(RPSPredictor):
         super().__init__()
         self.order = order
         self.transitions = defaultdict(lambda: defaultdict(int))
+        self.frequency = {'R': 0, 'P': 0, 'S': 0}
 
     def predict(self) -> str:
-        # Not enough data - takes a random guess
-        if len(self.history) < self.order:
-            predicted_player_move = random.choice(self.MOVES)
+        # Tries the pattern matching
+        if len(self.history) >= self.order:
+            state = tuple(self.history[-self.order:])
+
+            # Checks if we've seen this pattern before
+            if state in self.transitions:
+                counts = self.transitions[state]
+
+                # Need atleast 2 observations to trust the pattern
+                if sum(counts.values()) >= 2:
+                    predicted_player_move = max(counts, key = counts.get)
+                    return self.counter(predicted_player_move)
+                
+        # Fall back onto frequency analysis
+        if sum(self.frequency.values()) >- 5:
+            predicted_player_move = max(self.frequency, key = self.frequency.get)
             return self.counter(predicted_player_move)
         
-        # This grabs the last k moves (3) in history
-        state = tuple(self.history[-self.order:])
-
-        # Checks if we have seen this state before
-        if state not in self.transitions:
-            predicted_player_move = random.choice(self.MOVES)
-            return self.counter(predicted_player_move)
-        
-        # Finds the most common next move
-        counts = self.transitions[state]
-        total = sum(counts.values())
-
-        if total == 0:
-            predicted_player_move = random.choice(self.MOVES)
-            return self.counter(predicted_player_move)
-        
-        # Predict most likely player move
-        predicted_player_move = max(counts, key = counts.get)
-
+        # If not enough data: go random
+        predicted_player_move = random.choice(self.MOVES)
         return self.counter(predicted_player_move)
 
     def update(self, player_move: str, ai_move: str) -> None:
         self._record_round(player_move, ai_move)
+        self.frequency[player_move] += 1
 
         if len(self.history) >= self.order + 1:
             state = tuple(self.history[-(self.order+1):-1])

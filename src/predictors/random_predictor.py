@@ -29,7 +29,7 @@ class RandomPredictor(RPSPredictor):
 
 
 if __name__ == "__main__":
-    print("MARKOV TESTING")
+    print("RANDOM TESTING")
     predictor = RandomPredictor()
     stats = predictor.get_stats()
     print("Stats", stats)

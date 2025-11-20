@@ -4,7 +4,7 @@ import glob
 import numpy as np
 from collections import defaultdict
 from typing import Dict, Optional, Tuple
-from player import Player
+from players import Player
 from base_predictor import RPSPredictor
 
 

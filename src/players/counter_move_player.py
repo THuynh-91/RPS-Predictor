@@ -1,4 +1,4 @@
-from player import Player
+from players.player import Player
 import random
 
 class CounterMovePlayer(Player):

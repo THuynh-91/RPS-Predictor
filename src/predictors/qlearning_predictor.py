@@ -2,19 +2,20 @@ import random
 import pickle
 import glob
 import numpy as np
-from collections import defaultdict
-from typing import Dict, Optional, Tuple
-from players import Player
-from base_predictor import RPSPredictor
+from typing import Dict, Optional, Tuple, Literal
+from predictors.base_predictor import RPSPredictor
+from players.player import Player
 
 
 class QLearningPredictor(RPSPredictor):
-
     MOVE_TO_IDX = {'R': 0, 'P': 1, 'S': 2}
     IDX_TO_MOVE = {0: 'R', 1: 'P', 2: 'S'}
     trained = False
 
-    def __init__(self, alpha: float = None, gamma: float = 0.9, epsilon: float = 1.0, decay_rate: float = 0.99):
+    def __init__(self, alpha: float = None,
+                 gamma: float = 0.9,
+                 epsilon: float = 1.0,
+                 decay_rate: float = 0.99):
         super().__init__()
 
         self.gamma = gamma
@@ -23,18 +24,20 @@ class QLearningPredictor(RPSPredictor):
 
         # q table: state (tuple of last 3 rounds) -> array of Q-values for each predicted move
         self.q_table: Dict[Optional[Tuple], np.ndarray] = {}
-        
+
         # track number of updates for adaptive learning rate
         self.n_updates: Dict[Optional[Tuple], np.ndarray] = {}
 
         self.game_history = []  # list of (opponent_move, ai_move) tuples
-        
+
         self.prev_state = None
         self.prev_action_idx = None
 
         self.episodes = 0
 
-        self.load_q_table()
+        q_table_path = self.find_q_table()
+        if q_table_path:
+            self.load_q_table(q_table_path)
 
     def _get_state(self) -> Optional[Tuple]:
         """
@@ -43,7 +46,7 @@ class QLearningPredictor(RPSPredictor):
         """
         if len(self.game_history) < 3:
             return None
-        
+
         return tuple(self.game_history[-3:])
 
     def predict(self) -> str:
@@ -69,7 +72,7 @@ class QLearningPredictor(RPSPredictor):
 
         # return counter move
         ai_move = self.counter(predicted_player_move)
-        
+
         return ai_move
 
     def update(self, opponent_move: str, ai_move: str):
@@ -87,12 +90,12 @@ class QLearningPredictor(RPSPredictor):
         if predicted_move == opponent_move:
             reward = 1  # correct
         elif self.counter(predicted_move) == opponent_move:
-            reward = 0 # neutral
+            reward = 0  # neutral
         else:
             reward = -1  # incorrect
 
         new_state = self._get_state()
-        
+
         if new_state not in self.q_table:
             self.q_table[new_state] = np.zeros(3)
             self.n_updates[new_state] = np.zeros(3)
@@ -119,7 +122,7 @@ class QLearningPredictor(RPSPredictor):
         """
         if self.trained:
             return
-        
+
         if msgs:
             print(f"[TRAIN] Training for {episodes} episodes...")
             print(f"[TRAIN] Initial epsilon: {self.epsilon:.4f}")
@@ -143,12 +146,15 @@ class QLearningPredictor(RPSPredictor):
 
             opponent.observe(ai_move)
             self.update(opp_move, ai_move)
-        
+
         self.trained = True
         self.save_q_table()
 
     def _filename(self):
         return f"Q_RPS_ep{self.episodes}_g{self.gamma}_d{self.decay_rate}.pickle"
+
+    def _glob_pattern(self):
+        return f"Q_RPS_ep*_g{self.gamma}_d{self.decay_rate}.pickle"
 
     def save_q_table(self):
         data = {
@@ -166,13 +172,12 @@ class QLearningPredictor(RPSPredictor):
         except Exception as e:
             print(f"Failed to save Q-table: {e}")
 
-    def load_q_table(self):
-        pattern = f"Q_RPS_ep*_g{self.gamma}_d{self.decay_rate}.pickle"
+    def find_q_table(self) -> str | Literal[False]:
+        pattern = self._glob_pattern()
         files = glob.glob(pattern)
 
         if not files:
-            print("No matching Q-table found. Starting fresh.")
-            return
+            return False
 
         def extract_ep(name):
             try:
@@ -180,24 +185,25 @@ class QLearningPredictor(RPSPredictor):
             except:
                 return 0
 
-        best_file = max(files, key=extract_ep)
+        return max(files, key=extract_ep)
 
+    def load_q_table(self, path: str):
         try:
-            with open(best_file, "rb") as f:
+            with open(path, "rb") as f:
                 data = pickle.load(f)
 
             # convert lists back to numpy arrays
             self.q_table = {k: np.array(v) for k, v in data["Q"].items()}
             self.n_updates = {k: np.array(v) for k, v in data["N"].items()}
-            
+
             self.episodes = data.get("episodes", 0)
             self.epsilon = data.get("epsilon", self.epsilon)
 
-            print(f"Loaded Q-table: {best_file}")
+            print(f"Loaded Q-table: {path}")
             print(f"  Episodes trained: {self.episodes}")
             print(f"  Current epsilon: {self.epsilon:.4f}")
             print(f"  States learned: {len(self.q_table)}")
             self.trained = True
 
         except Exception as e:
-            print(f"Failed to load Q-table {best_file}: {e}")
+            print(f"Failed to load Q-table {path}: {e}")

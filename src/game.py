@@ -1,5 +1,7 @@
-from predictors import RandomPredictor, MarkovPredictor, QLearningPredictor
-from players import CounterMovePlayer
+from predictors.random_predictor import RandomPredictor
+from predictors.markov_predictor import MarkovPredictor
+from predictors.qlearning_predictor import QLearningPredictor
+from players.counter_move_player import CounterMovePlayer
 
 '''
 Game Controller

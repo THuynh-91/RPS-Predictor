@@ -1,5 +1,5 @@
 import random
-from base_predictor import RPSPredictor
+from predictors.base_predictor import RPSPredictor
 from collections import defaultdict
 
 '''

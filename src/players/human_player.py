@@ -1,4 +1,4 @@
-from players.player import Player
+from .player import Player
 
 class HumanPlayer(Player):
     # A player that takes input from a human user.

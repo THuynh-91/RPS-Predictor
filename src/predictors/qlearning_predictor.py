@@ -1,10 +1,15 @@
+import sys
+import os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
 import random
 import pickle
 import glob
 import numpy as np
 from typing import Dict, Optional, Tuple, Literal
-from predictors.base_predictor import RPSPredictor
+from base_predictor import RPSPredictor
 from players.player import Player
+
 
 
 class QLearningPredictor(RPSPredictor):
@@ -207,3 +212,6 @@ class QLearningPredictor(RPSPredictor):
 
         except Exception as e:
             print(f"Failed to load Q-table {path}: {e}")
+
+if __name__ == "__main__":
+    print("Hello world")

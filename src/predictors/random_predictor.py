@@ -1,5 +1,5 @@
 import random
-from predictors.base_predictor import RPSPredictor
+from base_predictor import RPSPredictor
 
 ''' 
 Random Strategy

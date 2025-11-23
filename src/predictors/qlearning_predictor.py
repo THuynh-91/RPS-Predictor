@@ -7,7 +7,7 @@ import pickle
 import glob
 import numpy as np
 from typing import Dict, Optional, Tuple, Literal
-from base_predictor import RPSPredictor
+from .base_predictor import RPSPredictor
 from players.player import Player
 
 

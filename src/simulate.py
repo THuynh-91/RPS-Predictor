@@ -40,12 +40,18 @@ def simulate_model_vs_player(model, player, num_games=100000, deterministic=Fals
             return 'tie'
         beats = {'R': 'S', 'P': 'R', 'S': 'P'}
         return 'win' if beats.get(my) == opp else 'loss'
+    
+    def reverse_counter(ai_move):
+        reverse = {'R': 'S', 'P': 'R', 'S': 'P'}
+        return reverse.get(ai_move)
 
     records = []
     model_wins = player_wins = ties = 0
 
     for i in range(num_games):
         m_move = agent.get_move()
+        
+        model_prediction = reverse_counter(m_move)
         p_move = player.get_move()
 
         res = round_result(m_move, p_move)
@@ -59,14 +65,15 @@ def simulate_model_vs_player(model, player, num_games=100000, deterministic=Fals
         records.append({
             'round': i + 1,
             'model_move': m_move,
-            'player_move': p_move,
+            'opponent_move': p_move,
+            'model_prediction': model_prediction, 
             'result': res,
             'cum_model_wins': model_wins,
             'cum_player_wins': player_wins,
             'cum_ties': ties
         })
 
-        # let agents observe outcomes
+        # Let agents observe outcomes
         try:
             agent.observe(opponent_move=p_move, my_move=m_move)
         except Exception:

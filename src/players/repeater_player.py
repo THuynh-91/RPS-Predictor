@@ -11,6 +11,9 @@ class RepeaterPlayer(Player):
 
     def get_move(self) -> str:
         if self.last_move is not None and random.random() < self.rep_preference:
-            return self.last_move
+            move = self.last_move
         else:
-            return random.choice(['R', 'P', 'S'])
+            move = random.choice(['R', 'P', 'S'])
+        
+        self.last_move = move
+        return move

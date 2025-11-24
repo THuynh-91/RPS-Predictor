@@ -214,4 +214,5 @@ class QLearningPredictor(RPSPredictor):
             print(f"Failed to load Q-table {path}: {e}")
 
 if __name__ == "__main__":
-    print("Hello world")
+    # Testing
+    pass

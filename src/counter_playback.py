@@ -2,8 +2,8 @@ from manim import *
 import pandas as pd
 import random
 
-DATA_FILE = "../results/results_random_vs_random.csv"
-SHOW_ROUNDS = 10  
+DATA_FILE = "../results/results_random_vs_counter.csv"
+SHOW_ROUNDS = 30  
 
 MOVE_COLOR = {"R": RED, "P": BLUE, "S": GREEN}
 RESULT_COLOR = {"win": GREEN, "lose": RED, "tie": GRAY}
@@ -16,7 +16,7 @@ class RPSPlayback(Scene):
         df = pd.read_csv(DATA_FILE).head(SHOW_ROUNDS)
 
         # Title
-        title = Text("Random vs Random (first 30 rounds)", font_size=36)
+        title = Text("Counter vs Random (first 30 rounds)", font_size=36)
         title.to_edge(UP, buff=0.4)
         self.add(title)
 
@@ -57,7 +57,7 @@ class RPSPlayback(Scene):
         correct_predictions = 0
         total_predictions = 0
 
-        # Move history (right side)
+        # Move history 
         move_history_title = Text("Move History:", font_size=24, color=YELLOW)
         move_history_title.next_to(title, DOWN, buff=0.5).to_edge(RIGHT, buff=0.5)
         
@@ -91,7 +91,7 @@ class RPSPlayback(Scene):
         move_history.next_to(header_entry, DOWN, buff=0.15)
         self.add(move_history)
 
-        # Static Win Rate % text (center, above round number)
+        # Static Win Rate % text 
         win_rate_center = Text("Win Rate: --%", font_size=24, color=GREEN)
         win_rate_center.move_to(ORIGIN).shift(UP * 0.7)
         self.add(win_rate_center)
@@ -278,7 +278,7 @@ class RPSPlayback(Scene):
     # Helper methods
     def _show_random_selection(self, round_txt, final_ai_move, final_opp_move):
         """Animate the random selection process for both players."""
-        ai_label = Text("AI (Random):", font_size=24, color=YELLOW).next_to(
+        ai_label = Text("AI (Counter):", font_size=24, color=YELLOW).next_to(
             round_txt, DOWN, buff=0.5
         )
         opp_label = Text("Opponent (Random):", font_size=24, color=YELLOW).next_to(
@@ -369,14 +369,14 @@ class RPSPlayback(Scene):
         center_container = VGroup(center_group)
         center_container.set_width(1.0)
 
-        # Result text – LARGER font size
+        # Result text
         result_text = Text(
             f"({result})",
-            font_size=16,  # increased from 15
+            font_size=16, 
             color=RESULT_COLOR[result],
         )
 
-        box_width = 0.75  # slightly wider to accommodate larger font
+        box_width = 0.75 
         box_height = result_text.height * 1.2
         box = Rectangle(
             width=box_width,

@@ -3,7 +3,7 @@ import pandas as pd
 import random
 
 DATA_FILE = "../results/results_random_vs_random.csv"
-SHOW_ROUNDS = 10  
+SHOW_ROUNDS = 30  
 
 MOVE_COLOR = {"R": RED, "P": BLUE, "S": GREEN}
 RESULT_COLOR = {"win": GREEN, "lose": RED, "tie": GRAY}
@@ -231,47 +231,45 @@ class RPSPlayback(Scene):
                 round_num, ai_move, opp_move, result
             )
             
-            # Position the entry at the correct location BEFORE any animations
-            history_entry.next_to(
-                header_entry,
-                DOWN,
-                buff=0.15 + len(move_history) * 0.35,
-            )
-            
-            move_history.add(history_entry)
-
-            if len(move_history) > MAX_HISTORY:
+            if len(move_history) < MAX_HISTORY:
+                # Still building up - add at bottom
+                history_entry.next_to(
+                    header_entry,
+                    DOWN,
+                    buff=0.15 + len(move_history) * 0.35,
+                )
+                move_history.add(history_entry)
+                self.play(FadeIn(history_entry), run_time=0.2)
+            else:
+                # At capacity: smooth scroll 
                 old_entry = move_history[0]
                 
-                # Animate everything sliding up together 
+                # Position new entry just below the last visible entry
+                history_entry.next_to(
+                    move_history[-1], DOWN, buff=0.35
+                )
+                move_history.add(history_entry)
+                
+                # Create shift animations for all entries
                 animations = []
                 
-                # Slide old entry up and fade out simultaneously
-                old_entry.generate_target()
-                old_entry.target.shift(UP * 0.35)
-                old_entry.target.set_opacity(0)
-                animations.append(MoveToTarget(old_entry))
+                # Old entry fades while shifting
+                animations.append(FadeOut(old_entry, shift=UP * 0.35, run_time=0.3))
                 
-                # Slide all remaining entries up
+                # All other entries shift up to their new positions
                 for i, entry in enumerate(move_history[1:], start=0):
                     entry.generate_target()
                     entry.target.next_to(
                         header_entry, DOWN, buff=0.15 + i * 0.35
                     )
-                    animations.append(MoveToTarget(entry))
+                    animations.append(MoveToTarget(entry, run_time=0.3))
                 
-                # Fade in new entry at bottom
-                history_entry.set_opacity(0)
-                animations.append(history_entry.animate.set_opacity(1))
+                # Play all together
+                self.play(*animations)
                 
-                # Play all animations together for smooth scroll effect
-                self.play(*animations, run_time=0.3)
-                
-                # Remove the old entry after animation
+                # Remove old entry
                 move_history.remove(old_entry)
                 self.remove(old_entry)
-            else:
-                self.play(FadeIn(history_entry), run_time=0.2)
 
             self.wait(0.1)
 

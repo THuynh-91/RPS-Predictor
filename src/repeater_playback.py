@@ -1,9 +1,10 @@
 from manim import *
 import pandas as pd
-import random
 
 DATA_FILE = "../results/results_random_vs_repeater.csv"
-SHOW_ROUNDS = 30 
+SHOW_ROUNDS = 30
+ROW_GAP = 0.35
+MAX_HISTORY = 6
 
 MOVE_COLOR = {"R": RED, "P": BLUE, "S": GREEN}
 RESULT_COLOR = {"win": GREEN, "lose": RED, "tie": GRAY}
@@ -16,7 +17,7 @@ class RPSPlayback(Scene):
         df = pd.read_csv(DATA_FILE).head(SHOW_ROUNDS)
 
         # Title
-        title = Text("Repeater vs Random (first 30 rounds)", font_size=36)
+        title = Text("Random vs Repeater (first 30 rounds)", font_size=36)
         title.to_edge(UP, buff=0.4)
         self.add(title)
 
@@ -57,33 +58,67 @@ class RPSPlayback(Scene):
         correct_predictions = 0
         total_predictions = 0
 
-        # Move history 
+        # Move history title 
         move_history_title = Text("Move History:", font_size=24, color=YELLOW)
         move_history_title.next_to(title, DOWN, buff=0.5).to_edge(RIGHT, buff=0.5)
-        
-        # Add header row showing M vs P - make columns match entry structure
-        header_round = Text("R#:", font_size=14, color=GRAY)
-        header_round_container = VGroup(header_round)
-        header_round_container.set_width(0.4)
-        
+
+        # Header row: 3 fixed-width columns (R#, M vs P, Result) 
+
+        # Round column (
+        hdr_round_text = Text("R#:", font_size=14, color=GRAY)
+        hdr_round_box = Rectangle(
+            width=0.4,
+            height=hdr_round_text.height * 1.3,
+            stroke_width=0,
+            fill_opacity=0,
+            fill_color=BLACK,
+        )
+        hdr_round_text.move_to(hdr_round_box)
+        hdr_round_text.align_to(hdr_round_box, LEFT)
+        header_round_container = VGroup(hdr_round_box, hdr_round_text)
+
+        # Middle column: M vs P
         m_label = Text("M", font_size=14, color=YELLOW, weight=BOLD)
         vs_header = Text("vs", font_size=12, color=GRAY)
         p_label = Text("P", font_size=14, color=YELLOW, weight=BOLD)
-        
-        header_center = VGroup(m_label, vs_header, p_label).arrange(RIGHT, buff=0.1)
-        header_center_container = VGroup(header_center)
-        header_center_container.set_width(1.0)
-        
-        result_header = Text("Result", font_size=14, color=GRAY)
-        result_header_container = VGroup(result_header)
-        result_header_container.set_width(0.75)
-        
-        header_entry = VGroup(header_round_container, header_center_container, result_header_container).arrange(RIGHT, buff=0.15)
+        header_center_inner = VGroup(m_label, vs_header, p_label).arrange(
+            RIGHT, buff=0.1
+        )
+        header_center_box = Rectangle(
+            width=1.0,
+            height=header_center_inner.height * 1.3,
+            stroke_width=0,
+            fill_opacity=0,
+            fill_color=BLACK,
+        )
+        header_center_inner.move_to(header_center_box)
+        header_center_container = VGroup(header_center_box, header_center_inner)
+
+        # Result column
+        result_header_text = Text("Result", font_size=14, color=GRAY)
+        result_header_box = Rectangle(
+            width=0.75,
+            height=result_header_text.height * 1.3,
+            stroke_width=0,
+            fill_opacity=0,
+            fill_color=BLACK,
+        )
+        result_header_text.move_to(result_header_box)
+        result_header_container = VGroup(result_header_box, result_header_text)
+
+        header_entry = VGroup(
+            header_round_container,
+            header_center_container,
+            result_header_container,
+        ).arrange(RIGHT, buff=0.15)
         header_entry.next_to(move_history_title, DOWN, buff=0.25)
-        
+
         # Center align the title above the entire header
-        move_history_title.move_to(header_entry.get_center() + UP * (move_history_title.height/2 + header_entry.height/2 + 0.25))
-        
+        move_history_title.move_to(
+            header_entry.get_center()
+            + UP * (move_history_title.height / 2 + header_entry.height / 2 + 0.25)
+        )
+
         self.add(move_history_title)
         self.add(header_entry)
 
@@ -96,7 +131,7 @@ class RPSPlayback(Scene):
         win_rate_center.move_to(ORIGIN).shift(UP * 0.7)
         self.add(win_rate_center)
 
-        # Bottom-right Win-Rate block: VGroup-based fraction 
+        # Bottom-right Win-Rate block
         def get_win_rate_group():
             wins = int(win_tracker.get_value())
             losses = int(loss_tracker.get_value())
@@ -111,41 +146,39 @@ class RPSPlayback(Scene):
                 wins_str = str(wins)
                 loss_str = str(losses)
 
-            # Create text elements
             wins_label = Text("Total Wins:", font_size=18, color=WHITE)
             wins_num = Text(wins_str, font_size=18, color=WHITE)
             loss_label = Text("Total Loss:", font_size=18, color=WHITE)
             loss_num = Text(loss_str, font_size=18, color=WHITE)
-            
-            # Position numerator: label on left, number on right with fixed gap
+
             wins_num.next_to(wins_label, RIGHT, buff=0.8)
             numerator = VGroup(wins_label, wins_num)
-            
-            # Position denominator: match the numerator layout
+
             loss_num.next_to(loss_label, RIGHT, buff=0.8)
-            # Align loss number directly below wins number
             loss_num.align_to(wins_num, RIGHT)
             denominator = VGroup(loss_label, loss_num)
-            
-            # Create fraction bar
+
             bar_length = max(numerator.width, denominator.width) * 1.1
-            fraction_bar = Line(LEFT * bar_length/2, RIGHT * bar_length/2, color=WHITE, stroke_width=2)
-            
-            # Stack vertically
-            fraction = VGroup(numerator, fraction_bar, denominator).arrange(DOWN, buff=0.15)
-            
-            # Add Win Rate label
+            fraction_bar = Line(
+                LEFT * bar_length / 2,
+                RIGHT * bar_length / 2,
+                color=WHITE,
+                stroke_width=2,
+            )
+
+            fraction = VGroup(numerator, fraction_bar, denominator).arrange(
+                DOWN, buff=0.15
+            )
+
             win_rate_label_text = Text("Win Rate =", font_size=20, color=YELLOW)
             win_rate_label_text.next_to(fraction, LEFT, buff=0.3)
-            
+
             return VGroup(win_rate_label_text, fraction)
 
         win_rate_group = get_win_rate_group()
         win_rate_group.to_edge(DOWN + RIGHT, buff=0.4)
         self.add(win_rate_group)
-        # -------------------------------------------------------------------------
 
-        MAX_HISTORY = 6
         accuracy_line = None
 
         # Main loop over rounds
@@ -154,7 +187,7 @@ class RPSPlayback(Scene):
             ai_move = row["model_move"]
             opp_move = row["opponent_move"]
             prediction = row.get("model_prediction", None)
-            result = row["result"]  
+            result = row["result"]  # 'win' means repeater/AI win
 
             # Round label centered under Win Rate %
             round_txt = Text(f"Round {round_num}", font_size=30)
@@ -173,7 +206,7 @@ class RPSPlayback(Scene):
             else:
                 tie_tracker.increment_value(1)
 
-            # Update bottom-right LaTeX fraction
+            # Update bottom-right fraction
             new_group = get_win_rate_group()
             new_group.move_to(win_rate_group)
             self.play(Transform(win_rate_group, new_group), run_time=0.1)
@@ -225,48 +258,50 @@ class RPSPlayback(Scene):
                     self.acc_display = acc_text
                     self.add(acc_text)
 
-            # Move history entry - position immediately before adding to scene
+            # Move history entry
             history_entry = self._create_history_entry(
                 round_num, ai_move, opp_move, result
             )
-            
+
             if len(move_history) < MAX_HISTORY:
-                # Still building up - add at bottom
+                # Build-up phase: stack under header
+                idx = len(move_history)
                 history_entry.next_to(
                     header_entry,
                     DOWN,
-                    buff=0.15 + len(move_history) * 0.35,
+                    buff=0.15 + idx * ROW_GAP,
                 )
                 move_history.add(history_entry)
                 self.play(FadeIn(history_entry), run_time=0.2)
+
             else:
-                # At capacity: smooth scroll 
+                # Scroll phase: smooth, aligned scroll
                 old_entry = move_history[0]
-                
-                # Position new entry just below the last visible entry
-                history_entry.next_to(
-                    move_history[-1], DOWN, buff=0.35
-                )
+
+                # Start new entry just below visible block
+                start_buff = 0.15 + MAX_HISTORY * ROW_GAP
+                history_entry.next_to(header_entry, DOWN, buff=start_buff)
+
                 move_history.add(history_entry)
-                
-                # Create shift animations for all entries
+                self.add(history_entry)
+
                 animations = []
-                
-                # Old entry fades while shifting
-                animations.append(FadeOut(old_entry, shift=UP * 0.35, run_time=0.3))
-                
-                # All other entries shift up to their new positions
+
+                # Re-layout rows 1..end under header
                 for i, entry in enumerate(move_history[1:], start=0):
                     entry.generate_target()
                     entry.target.next_to(
-                        header_entry, DOWN, buff=0.15 + i * 0.35
+                        header_entry,
+                        DOWN,
+                        buff=0.15 + i * ROW_GAP,
                     )
-                    animations.append(MoveToTarget(entry, run_time=0.3))
-                
-                # Play all together
-                self.play(*animations)
-                
-                # Remove old entry
+                    animations.append(Transform(entry, entry.target))
+
+                # Top row fades out
+                animations.append(FadeOut(old_entry))
+
+                self.play(*animations, run_time=0.3)
+
                 move_history.remove(old_entry)
                 self.remove(old_entry)
 
@@ -274,11 +309,11 @@ class RPSPlayback(Scene):
 
     # Helper methods
     def _show_random_selection(self, round_txt, final_ai_move, final_opp_move):
-        """Animate the random selection process for both players."""
-        ai_label = Text("AI (Repeater):", font_size=24, color=YELLOW).next_to(
-            round_txt, DOWN, buff=0.5
+        """Animate the selection process."""
+        ai_label = Text("AI (Random):", font_size=24, color=YELLOW).next_to(
+        round_txt, DOWN, buff=0.5
         )
-        opp_label = Text("Opponent (Random):", font_size=24, color=YELLOW).next_to(
+        opp_label = Text("Opponent (Repeater):", font_size=24, color=YELLOW).next_to(
             ai_label, DOWN, buff=0.3
         )
 
@@ -335,59 +370,75 @@ class RPSPlayback(Scene):
         )
 
     def _mini_token(self, move):
-        circle = Circle(radius=0.25, color=MOVE_COLOR[move], fill_opacity=0.3).set_stroke(
-            width=2
-        )
+        circle = Circle(
+            radius=0.25,
+            color=MOVE_COLOR[move],
+            fill_opacity=0.3,
+        ).set_stroke(width=2)
         text = Text(move, font_size=20, color=WHITE)
         return VGroup(circle, text)
 
     def _create_history_entry(self, round_num, ai_move, opp_move, result):
-        # Round label
-        round_label = Text(f"R{round_num}:", font_size=14, color=GRAY)
-        round_label_container = VGroup(round_label)
-        round_label_container.set_width(0.4)
+        # Round column
+        round_text = Text(f"R{round_num}:", font_size=14, color=GRAY)
+        round_box = Rectangle(
+            width=0.4,
+            height=round_text.height * 1.3,
+            stroke_width=0,
+            fill_opacity=0,
+            fill_color=BLACK,
+        )
+        round_text.move_to(round_box)
+        round_text.align_to(round_box, LEFT)
+        round_col = VGroup(round_box, round_text)
 
-        # Moves
+        # Middle column: M vs P
         ai_circle = Circle(
-            radius=0.12, color=MOVE_COLOR[ai_move], fill_opacity=0.4
+            radius=0.12,
+            color=MOVE_COLOR[ai_move],
+            fill_opacity=0.4,
         ).set_stroke(width=1.5)
-        ai_text = Text(ai_move, font_size=12, color=WHITE)
-        ai_token = VGroup(ai_circle, ai_text)
+        ai_letter = Text(ai_move, font_size=12, color=WHITE)
+        ai_token = VGroup(ai_circle, ai_letter)
 
         vs_text = Text("vs", font_size=12, color=GRAY)
 
         opp_circle = Circle(
-            radius=0.12, color=MOVE_COLOR[opp_move], fill_opacity=0.4
+            radius=0.12,
+            color=MOVE_COLOR[opp_move],
+            fill_opacity=0.4,
         ).set_stroke(width=1.5)
-        opp_text = Text(opp_move, font_size=12, color=WHITE)
-        opp_token = VGroup(opp_circle, opp_text)
+        opp_letter = Text(opp_move, font_size=12, color=WHITE)
+        opp_token = VGroup(opp_circle, opp_letter)
 
-        center_group = VGroup(ai_token, vs_text, opp_token).arrange(RIGHT, buff=0.1)
-        center_container = VGroup(center_group)
-        center_container.set_width(1.0)
-
-        # Result text
-        result_text = Text(
-            f"({result})",
-            font_size=16,  
-            color=RESULT_COLOR[result],
-        )
-
-        box_width = 0.75 
-        box_height = result_text.height * 1.2
-        box = Rectangle(
-            width=box_width,
-            height=box_height,
+        mid_inner = VGroup(ai_token, vs_text, opp_token).arrange(RIGHT, buff=0.1)
+        mid_box = Rectangle(
+            width=1.0,
+            height=mid_inner.height * 1.3,
             stroke_width=0,
             fill_opacity=0,
+            fill_color=BLACK,
         )
-        result_text.move_to(box.get_center())
-        result_container = VGroup(box, result_text)
+        mid_inner.move_to(mid_box)
+        mid_col = VGroup(mid_box, mid_inner)
 
-        entry = VGroup(
-            round_label_container, center_container, result_container
-        ).arrange(RIGHT, buff=0.15)
+        # Result column
+        res_text = Text(
+            f"({result})",
+            font_size=16,
+            color=RESULT_COLOR[result],
+        )
+        res_box = Rectangle(
+            width=0.75,
+            height=res_text.height * 1.3,
+            stroke_width=0,
+            fill_opacity=0,
+            fill_color=BLACK,
+        )
+        res_text.move_to(res_box)
+        res_col = VGroup(res_box, res_text)
 
+        entry = VGroup(round_col, mid_col, res_col).arrange(RIGHT, buff=0.15)
         return entry
 
     def _scoreboard(self, w, l, t):
@@ -414,9 +465,11 @@ class RPSPlayback(Scene):
         return VGroup(wins, losses, ties).arrange(DOWN, aligned_edge=LEFT, buff=0.3)
 
     def _token(self, role, move):
-        circle = Circle(radius=0.5, color=MOVE_COLOR[move], fill_opacity=0.15).set_stroke(
-            width=3
-        )
+        circle = Circle(
+            radius=0.5,
+            color=MOVE_COLOR[move],
+            fill_opacity=0.15,
+        ).set_stroke(width=3)
         label = Text(f"{role}: {LABELS[move]}", font_size=26)
         return VGroup(circle, label).arrange(RIGHT, buff=0.3)
 

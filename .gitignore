@@ -13,3 +13,7 @@ venv/
 # Manim cache 
 media/
 __pycache__/
+
+**/.miktex-workspace/
+**/.miktex/
+**/.miktex-root/

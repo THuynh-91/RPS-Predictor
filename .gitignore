@@ -4,3 +4,12 @@ __pycache__/
 results_*.csv
 *.csv
 venv/
+.claude/
+
+# MiKTeX cache
+.miktex/
+.miktex-root/
+
+# Manim cache 
+media/
+__pycache__/

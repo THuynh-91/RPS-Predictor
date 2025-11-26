@@ -329,13 +329,12 @@ class RPSPlayback(Scene):
         trans_bars.scale(0.9)
         trans_bars.next_to(history_display, DOWN, buff=0.25)
         
-        # Prediction text - say "Guess R" instead of "→ R"
-        if prediction != "--":
-            pred_text = Text(
-                f"Guess: {ai_move}",
-                font_size=16,
-                color=YELLOW
-            )
+        # Calculate prediction based on current transitions
+        if sum(transitions.values()) >= 2 and prediction != "--":
+            predicted_opp_move = max(transitions, key=transitions.get)
+            counter_map = {'R': 'P', 'P': 'S', 'S': 'R'}
+            ai_counter = counter_map[predicted_opp_move]
+            pred_text = Text(f"Predict: {predicted_opp_move} → AI: {ai_counter}", font_size=14, color=YELLOW)
         else:
             pred_text = Text("Learning...", font_size=14, color=GRAY)
         pred_text.next_to(trans_bars, DOWN, buff=0.15)

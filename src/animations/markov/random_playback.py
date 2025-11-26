@@ -4,7 +4,7 @@ import ast
 
 DATA_FILE = "../results/results_markov_vs_random.csv"
 SHOW_ROUNDS = 2001
-ANIMATED_ROUNDS = 3
+ANIMATED_ROUNDS = 5
 FINAL_ROUND = 2001
 UPDATE_INTERVAL = 10
 ROW_GAP = 0.35
@@ -207,10 +207,10 @@ class RPSPlayback(Scene):
                         markov_viz.become(new_markov_viz)
 
                 new_scoreboard = self._scoreboard(win_tracker, loss_tracker, tie_tracker)
-                new_scoreboard.move_to(scoreboard)
+                new_scoreboard.next_to(title, DOWN, buff=0.5).to_edge(LEFT, buff=0.5)
                 
                 new_group = get_win_rate_group()
-                new_group.move_to(win_rate_group)
+                new_group.to_edge(DOWN + RIGHT, buff=0.4)
                 
                 if is_animated:
                     self.play(
@@ -317,8 +317,12 @@ class RPSPlayback(Scene):
 
     def _create_markov_viz(self, history, transitions, prediction, ai_move):
         """Create compact Markov state visualization"""
+        # Order label (k=3)
+        order_label = Text("Order k=3", font_size=12, color=GRAY)
+        
         # History display
         history_display = self._create_history_display(history)
+        history_display.next_to(order_label, DOWN, buff=0.2)
         
         # Transitions bars (bigger)
         trans_bars = self._create_transition_bars(transitions)
@@ -336,7 +340,7 @@ class RPSPlayback(Scene):
             pred_text = Text("Learning...", font_size=14, color=GRAY)
         pred_text.next_to(trans_bars, DOWN, buff=0.15)
         
-        return VGroup(history_display, trans_bars, pred_text)
+        return VGroup(order_label, history_display, trans_bars, pred_text)
 
     def _create_history_display(self, history):
         """Create: R, P, [R, S, R]"""

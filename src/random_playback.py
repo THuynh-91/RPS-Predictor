@@ -1,12 +1,12 @@
 from manim import *
 import pandas as pd
-import ast
+import random
 
-DATA_FILE = "../results/results_markov_vs_counter.csv"
-SHOW_ROUNDS = 2001
-ANIMATED_ROUNDS = 5 # Rounds that actually get animated... so first 5 rounds
-FINAL_ROUND = 2001 # Gets full animation
-UPDATE_INTERVAL = 10
+DATA_FILE = "../results/results_random_vs_random.csv"
+SHOW_ROUNDS = 10001  # Process through round 10001
+ANIMATED_ROUNDS = 5  # Animate first 5 rounds
+FINAL_ROUND = 10001  # Also animate the final round
+UPDATE_INTERVAL = 100  # Update visuals every N rounds during fast-forward
 ROW_GAP = 0.35
 
 MOVE_COLOR = {"R": RED, "P": BLUE, "S": GREEN}
@@ -20,7 +20,7 @@ class RPSPlayback(Scene):
         df = pd.read_csv(DATA_FILE).head(SHOW_ROUNDS)
 
         # Title
-        title = Text("Markov vs Counter (2k rounds)", font_size=36)
+        title = Text("Random vs Random (10k rounds)", font_size=36)
         title.to_edge(UP, buff=0.4)
         self.add(title)
 
@@ -34,13 +34,12 @@ class RPSPlayback(Scene):
         scoreboard.next_to(title, DOWN, buff=0.5).to_edge(LEFT, buff=0.5)
         self.add(scoreboard)
 
-        # Accuracy graph title - align with scoreboard
+        # Accuracy graph title
         accuracy_title = Text("Prediction Accuracy:", font_size=22, color=YELLOW)
-        accuracy_title.next_to(scoreboard, DOWN, buff=0.5)
-        accuracy_title.align_to(scoreboard, LEFT)
+        accuracy_title.next_to(scoreboard, DOWN, buff=0.5).align_to(scoreboard, LEFT)
         self.add(accuracy_title)
 
-        # Axes for accuracy graph (ensure it stays aligned)
+        # Axes for accuracy graph
         axes = Axes(
             x_range=[0, SHOW_ROUNDS, SHOW_ROUNDS//10],
             y_range=[0, 100, 20],
@@ -49,16 +48,12 @@ class RPSPlayback(Scene):
             axis_config={"color": GRAY, "include_numbers": False},
             tips=False,
         )
-        axes.next_to(accuracy_title, DOWN, buff=0.3)
-        axes.align_to(accuracy_title, LEFT)
+        axes.next_to(accuracy_title, DOWN, buff=0.3).align_to(accuracy_title, LEFT)
 
-        x_label = Text("Rounds", font_size=16, color=GRAY)
-        x_label.next_to(axes, DOWN, buff=0.2)
-        x_label.align_to(axes, LEFT)
-        
-        y_label = Text("Accuracy %", font_size=16, color=GRAY)
-        y_label.next_to(axes, LEFT, buff=0.2).rotate(90 * DEGREES)
-        
+        x_label = Text("Rounds", font_size=16, color=GRAY).next_to(axes, DOWN, buff=0.2)
+        y_label = Text("Accuracy %", font_size=16, color=GRAY).next_to(
+            axes, LEFT, buff=0.2
+        ).rotate(90 * DEGREES)
         self.add(axes, x_label, y_label)
 
         # Accuracy tracking
@@ -69,15 +64,9 @@ class RPSPlayback(Scene):
         # Move history setup
         move_history_title, header_entry, move_history = self._setup_move_history(title)
 
-        # Markov State Visualization (center top, between title and Win Rate %)
-        markov_viz_placeholder = Text("Pattern: --", font_size=18, color=YELLOW)
-        markov_viz_placeholder.next_to(title, DOWN, buff=0.5)
-        markov_viz = markov_viz_placeholder
-        self.add(markov_viz)
-
-        # Static Win Rate % text (center, below markov viz)
+        # Static Win Rate % text (center, above round number)
         win_rate_center = Text("Win Rate: --%", font_size=24, color=GREEN)
-        win_rate_center.move_to(ORIGIN).shift(UP * 0.3)
+        win_rate_center.move_to(ORIGIN).shift(UP * 0.7)
         self.add(win_rate_center)
 
         # Bottom-right Win-Rate block
@@ -124,16 +113,9 @@ class RPSPlayback(Scene):
         MAX_HISTORY = 6
         accuracy_line = None
         
-        # Fast forward indicator (position it below Win Rate)
-        ff_text = Text("Fast Forwarding...", font_size=28, color=YELLOW)
-        ff_text.move_to(ORIGIN).shift(DOWN * 0.5)
-
-        # Track history for Markov visualization
-        player_history = []
-        # Track ALL transitions globally
-        global_transitions = {"R": {"R": 0, "P": 0, "S": 0}, 
-                             "P": {"R": 0, "P": 0, "S": 0}, 
-                             "S": {"R": 0, "P": 0, "S": 0}}
+        # Fast forward indicator (hidden initially)
+        ff_text = Text("Fast Forwarding...", font_size=32, color=YELLOW)
+        ff_text.move_to(ORIGIN)
 
         # Main loop over rounds
         for idx, row in df.iterrows():
@@ -143,42 +125,27 @@ class RPSPlayback(Scene):
             prediction = row.get("model_prediction", None)
             result = row["result"]
             
-            # Parse markov_state if available
-            markov_state = row.get("markov_state", None)
-            transitions = row.get("transitions", None)
-            
+            # Determine animation mode: first 5 rounds OR final round
             is_animated = (round_num <= ANIMATED_ROUNDS) or (round_num == FINAL_ROUND)
             should_update_visual = is_animated or (round_num % UPDATE_INTERVAL == 0)
             
+            # Show fast-forward indicator after round 5
             if round_num == ANIMATED_ROUNDS + 1:
                 self.play(FadeIn(ff_text), run_time=0.3)
             
+            # Hide fast-forward indicator before final round
             if round_num == FINAL_ROUND and FINAL_ROUND > ANIMATED_ROUNDS:
                 self.play(FadeOut(ff_text), run_time=0.3)
 
+            # Only show round animation if in animated mode
             if is_animated:
                 round_txt = Text(f"Round {round_num}", font_size=30)
                 round_txt.next_to(win_rate_center, DOWN, buff=0.5)
                 self.play(FadeIn(round_txt), run_time=0.3)
-                self._show_selection(round_txt, ai_move, opp_move)
+                self._show_random_selection(round_txt, ai_move, opp_move)
                 self.play(FadeOut(round_txt), run_time=0.2)
 
-            # Update player history
-            player_history.append(opp_move)
-            
-            # Update global transitions (for all history)
-            if len(player_history) >= 4:
-                # Last 3 moves form the state
-                state = tuple(player_history[-4:-1])
-                next_move = player_history[-1]
-                
-                # Simplified: just track last move -> next move for now
-                last_move = player_history[-2]
-                global_transitions[last_move][next_move] += 1
-            
-            if len(player_history) > 5:
-                player_history.pop(0)
-
+            # Update scoreboard counters 
             if result == "win":
                 win_tracker.increment_value(1)
             elif result == "lose":
@@ -186,42 +153,28 @@ class RPSPlayback(Scene):
             else:
                 tie_tracker.increment_value(1)
 
+            # Update visuals periodically
             if should_update_visual:
-                # Update Markov visualization
-                if len(player_history) >= 3:
-                    # Get transitions for current state (last move)
-                    current_state = player_history[-1]
-                    trans_dict = global_transitions[current_state]
-                    
-                    new_markov_viz = self._create_markov_viz(
-                        player_history, 
-                        trans_dict,
-                        prediction if prediction else "--",
-                        ai_move
-                    )
-                    new_markov_viz.next_to(title, DOWN, buff=0.5)
-                    
-                    if is_animated:
-                        self.play(Transform(markov_viz, new_markov_viz), run_time=0.1)
-                    else:
-                        markov_viz.become(new_markov_viz)
-
+                # Create new scoreboard and win rate
                 new_scoreboard = self._scoreboard(win_tracker, loss_tracker, tie_tracker)
-                new_scoreboard.next_to(title, DOWN, buff=0.5).to_edge(LEFT, buff=0.5)
+                new_scoreboard.move_to(scoreboard)
                 
                 new_group = get_win_rate_group()
-                new_group.to_edge(DOWN + RIGHT, buff=0.4)
+                new_group.move_to(win_rate_group)
                 
                 if is_animated:
+                    # Animate both together
                     self.play(
                         Transform(scoreboard, new_scoreboard),
                         Transform(win_rate_group, new_group),
                         run_time=0.1
                     )
                 else:
+                    # Update both instantly
                     scoreboard.become(new_scoreboard)
                     win_rate_group.become(new_group)
 
+                # Update central win rate %
                 wins_now = int(win_tracker.get_value())
                 losses_now = int(loss_tracker.get_value())
                 total_games = wins_now + losses_now
@@ -237,6 +190,7 @@ class RPSPlayback(Scene):
                 else:
                     win_rate_center.become(new_center)
 
+            # Update prediction accuracy
             if prediction and pd.notna(prediction):
                 total_predictions += 1
                 if prediction == opp_move:
@@ -275,6 +229,7 @@ class RPSPlayback(Scene):
                         self.acc_display = acc_text
                         self.add(acc_text)
 
+            # Update move history
             if should_update_visual:
                 history_entry = self._create_history_entry(round_num, ai_move, opp_move, result)
 
@@ -300,7 +255,7 @@ class RPSPlayback(Scene):
                             entry.target.next_to(header_entry, DOWN, buff=0.15 + i * ROW_GAP)
                             animations.append(Transform(entry, entry.target))
                         animations.append(FadeOut(old_entry))
-                        self.play(*animations, run_time=0.15)
+                        self.play(*animations, run_time=0.3)
                     else:
                         for i, entry in enumerate(move_history[1:], start=0):
                             entry.next_to(header_entry, DOWN, buff=0.15 + i * ROW_GAP)
@@ -308,6 +263,7 @@ class RPSPlayback(Scene):
 
                     move_history.remove(old_entry)
 
+            # Small wait during fast-forward to see updates
             if not is_animated and should_update_visual:
                 self.wait(0.05)
             elif is_animated and round_num <= ANIMATED_ROUNDS:
@@ -315,108 +271,8 @@ class RPSPlayback(Scene):
         
         self.wait(2)
 
-    def _create_markov_viz(self, history, transitions, prediction, ai_move):
-        """Create compact Markov state visualization"""
-        # Order label (k=3)
-        order_label = Text("Order k=3", font_size=12, color=GRAY)
-        
-        # History display
-        history_display = self._create_history_display(history)
-        history_display.next_to(order_label, DOWN, buff=0.2)
-        
-        # Transitions bars (bigger)
-        trans_bars = self._create_transition_bars(transitions)
-        trans_bars.scale(0.9)
-        trans_bars.next_to(history_display, DOWN, buff=0.25)
-        
-        # Prediction text - say "Guess R" instead of "→ R"
-        if prediction != "--":
-            pred_text = Text(
-                f"Guess: {ai_move}",
-                font_size=16,
-                color=YELLOW
-            )
-        else:
-            pred_text = Text("Learning...", font_size=14, color=GRAY)
-        pred_text.next_to(trans_bars, DOWN, buff=0.15)
-        
-        return VGroup(order_label, history_display, trans_bars, pred_text)
-
-    def _create_history_display(self, history):
-        """Create: R, P, [R, S, R]"""
-        tokens = []
-        hist_len = len(history)
-        
-        if hist_len < 3:
-            # Not enough history yet
-            return Text("Pattern: Learning...", font_size=16, color=GRAY)
-        
-        # Show last 5 moves (or fewer if not available)
-        display_history = history[-5:] if hist_len >= 5 else history
-        state_start = len(display_history) - 3
-        
-        for i, move in enumerate(display_history):
-            is_state = i >= state_start
-            
-            # Add bracket before state
-            if i == state_start and state_start > 0:
-                bracket = Text("[", font_size=20, color=YELLOW)
-                tokens.append(bracket)
-            
-            token = self._create_move_token(move, is_state=is_state)
-            tokens.append(token)
-            
-            # Add comma
-            if i < len(display_history) - 1:
-                comma = Text(",", font_size=16, color=YELLOW if is_state else GRAY)
-                tokens.append(comma)
-            
-            # Add closing bracket after last state move
-            if i == len(display_history) - 1 and state_start > 0:
-                bracket = Text("]", font_size=20, color=YELLOW)
-                tokens.append(bracket)
-        
-        return VGroup(*tokens).arrange(RIGHT, buff=0.1)
-
-    def _create_move_token(self, move, is_state=False):
-        """Create colored circle with letter"""
-        if is_state:
-            circle = Circle(radius=0.18, color=MOVE_COLOR[move], fill_opacity=0.5)
-            circle.set_stroke(width=3)
-        else:
-            circle = Circle(radius=0.18, color=MOVE_COLOR[move], fill_opacity=0.2)
-            circle.set_stroke(width=2)
-        
-        letter = Text(move, font_size=14, color=WHITE)
-        return VGroup(circle, letter)
-
-    def _create_transition_bars(self, transitions):
-        """Show transition counts as numbers only"""
-        # Title for transitions section
-        trans_label = Text("Next Move Counts:", font_size=14, color=GRAY)
-        
-        counts = []
-        for move in ["R", "P", "S"]:
-            count = transitions.get(move, 0)
-            
-            # Move label with colored circle (bigger)
-            circle = Circle(radius=0.12, color=MOVE_COLOR[move], fill_opacity=0.6).set_stroke(width=2.5)
-            move_text = Text(move, font_size=13, color=WHITE)
-            move_token = VGroup(circle, move_text)
-            
-            # Count text (bigger)
-            count_text = Text(f": {count}", font_size=16, color=WHITE)
-            
-            row = VGroup(move_token, count_text).arrange(RIGHT, buff=0.1)
-            counts.append(row)
-        
-        # More spacing between counts
-        counts_group = VGroup(*counts).arrange(RIGHT, buff=0.4)
-        
-        # Combine label and counts
-        return VGroup(trans_label, counts_group).arrange(DOWN, buff=0.12)
-
     def _setup_move_history(self, title):
+        """Setup move history title, header, and container"""
         move_history_title = Text("Move History:", font_size=24, color=YELLOW)
         move_history_title.next_to(title, DOWN, buff=0.5).to_edge(RIGHT, buff=0.5)
 
@@ -452,14 +308,15 @@ class RPSPlayback(Scene):
         
         return move_history_title, header_entry, move_history
 
-    def _show_selection(self, round_txt, final_ai_move, final_opp_move):
-        ai_label = Text("AI (Markov):", font_size=24, color=YELLOW).next_to(round_txt, DOWN, buff=0.5)
-        opp_label = Text("Opponent (Counter):", font_size=24, color=YELLOW).next_to(ai_label, DOWN, buff=0.3)
+    def _show_random_selection(self, round_txt, final_ai_move, final_opp_move):
+        """Animate the random selection process for both players."""
+        ai_label = Text("AI (Random):", font_size=24, color=YELLOW).next_to(round_txt, DOWN, buff=0.5)
+        opp_label = Text("Opponent (Random):", font_size=24, color=YELLOW).next_to(ai_label, DOWN, buff=0.3)
         self.play(FadeIn(ai_label), FadeIn(opp_label), run_time=0.2)
 
-        ai_options = VGroup(*[self._mini_token_anim(move) for move in ALL_MOVES]).arrange(RIGHT, buff=0.2)
+        ai_options = VGroup(*[self._mini_token(move) for move in ALL_MOVES]).arrange(RIGHT, buff=0.2)
         ai_options.next_to(ai_label, RIGHT, buff=0.3)
-        opp_options = VGroup(*[self._mini_token_anim(move) for move in ALL_MOVES]).arrange(RIGHT, buff=0.2)
+        opp_options = VGroup(*[self._mini_token(move) for move in ALL_MOVES]).arrange(RIGHT, buff=0.2)
         opp_options.next_to(opp_label, RIGHT, buff=0.3)
         self.play(FadeIn(ai_options), FadeIn(opp_options), run_time=0.2)
 
@@ -467,14 +324,14 @@ class RPSPlayback(Scene):
             self.play(ai_options.animate.set_opacity(0.3), opp_options.animate.set_opacity(0.3), run_time=0.1)
             self.play(ai_options.animate.set_opacity(1), opp_options.animate.set_opacity(1), run_time=0.1)
 
-        ai_selected = self._mini_token_anim(final_ai_move).next_to(ai_label, RIGHT, buff=0.3).scale(1.2)
-        opp_selected = self._mini_token_anim(final_opp_move).next_to(opp_label, RIGHT, buff=0.3).scale(1.2)
+        ai_selected = self._mini_token(final_ai_move).next_to(ai_label, RIGHT, buff=0.3).scale(1.2)
+        opp_selected = self._mini_token(final_opp_move).next_to(opp_label, RIGHT, buff=0.3).scale(1.2)
         self.play(Transform(ai_options, ai_selected), Transform(opp_options, opp_selected), run_time=0.3)
 
         self.wait(0.2)
         self.play(FadeOut(ai_label), FadeOut(opp_label), FadeOut(ai_options), FadeOut(opp_options), run_time=0.2)
 
-    def _mini_token_anim(self, move):
+    def _mini_token(self, move):
         circle = Circle(radius=0.25, color=MOVE_COLOR[move], fill_opacity=0.3).set_stroke(width=2)
         text = Text(move, font_size=20, color=WHITE)
         return VGroup(circle, text)

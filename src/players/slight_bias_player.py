@@ -10,7 +10,7 @@ class SlightBiasPlayer(Player):
         self.other_moves = ['P', 'S']
 
     def get_move(self) -> str:
-        if random.random() < 0.35:
+        if random.random() < 0.4:
             return self.bias_move
         else:
             return random.choice(self.other_moves)

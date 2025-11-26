@@ -151,6 +151,7 @@ class QLearningPredictor(RPSPredictor):
             opponent.observe(ai_move)
             self.update(opp_move, ai_move)
 
+        self.epsilon = 0.0
         self.trained = True
         self.save_q_table()
 
@@ -201,7 +202,7 @@ class QLearningPredictor(RPSPredictor):
             self.n_updates = {k: np.array(v) for k, v in data["N"].items()}
 
             self.episodes = data.get("episodes", 0)
-            self.epsilon = data.get("epsilon", self.epsilon)
+            self.epsilon = 0.0
 
             print(f"Loaded Q-table: {path}")
             print(f"  Episodes trained: {self.episodes}")

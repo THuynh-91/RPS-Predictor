@@ -44,13 +44,13 @@ class QLearningPredictor(RPSPredictor):
         if q_table_path:
             self.load_q_table(q_table_path)
 
-    def _get_state(self) -> Optional[Tuple]:
+    def _get_state(self) -> Tuple[Tuple[str, str], ...]:
         """
         Get current state from last 3 rounds of play.
         Returns tuple of last 3 (opponent_move, ai_move) pairs, or None if < 3 rounds.
         """
-        if len(self.game_history) < 3:
-            return None
+        if len(self.game_history) == 0:
+            return tuple()
 
         return tuple(self.game_history[-3:])
 
@@ -90,14 +90,13 @@ class QLearningPredictor(RPSPredictor):
         if self.prev_action_idx is None:
             return
 
-        predicted_move = self.IDX_TO_MOVE[self.prev_action_idx]
-        reward = 0
-        if predicted_move == opponent_move:
-            reward = 1  # correct
-        elif self.counter(predicted_move) == opponent_move:
-            reward = 0  # neutral
-        else:
-            reward = -1  # incorrect
+        result = self.get_result(opponent_move, ai_move)
+        reward = {
+            "win": +1,
+            "tie": 0,
+            "lose": -1
+        }[result]
+
 
         new_state = self._get_state()
 
@@ -152,6 +151,7 @@ class QLearningPredictor(RPSPredictor):
             opponent.observe(ai_move)
             self.update(opp_move, ai_move)
 
+        self.epsilon = 0.0
         self.trained = True
         self.save_q_table()
 
@@ -162,6 +162,9 @@ class QLearningPredictor(RPSPredictor):
         return f"Q_RPS_ep*_g{self.gamma}_d{self.decay_rate}.pickle"
 
     def save_q_table(self):
+        save = input("Would you like to save the trained Q-table? (Y/N): ")
+        if save.lower() != 'y':
+            return
         data = {
             "Q": {k: v.tolist() for k, v in self.q_table.items()},
             "N": {k: v.tolist() for k, v in self.n_updates.items()},
@@ -202,7 +205,7 @@ class QLearningPredictor(RPSPredictor):
             self.n_updates = {k: np.array(v) for k, v in data["N"].items()}
 
             self.episodes = data.get("episodes", 0)
-            self.epsilon = data.get("epsilon", self.epsilon)
+            self.epsilon = 0.0
 
             print(f"Loaded Q-table: {path}")
             print(f"  Episodes trained: {self.episodes}")

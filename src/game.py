@@ -1,3 +1,4 @@
+from players.slight_bias_player import SlightBiasPlayer
 from predictors.random_predictor import RandomPredictor
 from predictors.markov_predictor import MarkovPredictor
 from predictors.qlearning_predictor import QLearningPredictor
@@ -150,12 +151,12 @@ def main():
                 episodes = 10000
             else:
                 episodes = int(episodes)
-            predictor.train_against(CounterMovePlayer(), episodes)
+            predictor.train_against(SlightBiasPlayer(), episodes)
         print("\nQ-Learning selected successfully!\n")
     else:
         print("Invalid choice")
 
-    player = CounterMovePlayer()
+    player = SlightBiasPlayer()
     game = RPSGame(player, predictor)
     game.play_interactive(100)
     game._show_final_stats()

@@ -1,6 +1,7 @@
 from players.counter_move_player import CounterMovePlayer
 from players.random_player import RandomPlayer
 from players.repeater_player import RepeaterPlayer
+from players.fizzbuzz_player import FizzBuzzPlayer
 from predictors.random_predictor import RandomPredictor
 from predictors.markov_predictor import MarkovPredictor
 from predictors.qlearning_predictor import QLearningPredictor  
@@ -58,9 +59,10 @@ if __name__ == "__main__":
         # Add RL here after...
     }
     players = {
-        "random": RandomPlayer,
-        "repeater": RepeaterPlayer,
-        "counter": CounterMovePlayer,
+        #"random": RandomPlayer,
+        #"repeater": RepeaterPlayer,
+        #"counter": CounterMovePlayer,
+        "fizzbuzz": FizzBuzzPlayer
     }
 
     output_dir = "results"  

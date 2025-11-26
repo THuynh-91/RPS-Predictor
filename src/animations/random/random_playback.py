@@ -3,10 +3,10 @@ import pandas as pd
 import random
 
 DATA_FILE = "../results/results_random_vs_random.csv"
-SHOW_ROUNDS = 10001  # Process through round 10001
+SHOW_ROUNDS = 1501  # Process through round 10001
 ANIMATED_ROUNDS = 5  # Animate first 5 rounds
-FINAL_ROUND = 10001  # Also animate the final round
-UPDATE_INTERVAL = 100  # Update visuals every N rounds during fast-forward
+FINAL_ROUND = 1501  # Also animate the final round
+UPDATE_INTERVAL = 50  # Update visuals every N rounds during fast-forward
 ROW_GAP = 0.35
 
 MOVE_COLOR = {"R": RED, "P": BLUE, "S": GREEN}
@@ -20,7 +20,7 @@ class RPSPlayback(Scene):
         df = pd.read_csv(DATA_FILE).head(SHOW_ROUNDS)
 
         # Title
-        title = Text("Random vs Random (10k rounds)", font_size=36)
+        title = Text("Random vs Random (2k rounds)", font_size=36)
         title.to_edge(UP, buff=0.4)
         self.add(title)
 
@@ -312,24 +312,24 @@ class RPSPlayback(Scene):
         """Animate the random selection process for both players."""
         ai_label = Text("AI (Random):", font_size=24, color=YELLOW).next_to(round_txt, DOWN, buff=0.5)
         opp_label = Text("Opponent (Random):", font_size=24, color=YELLOW).next_to(ai_label, DOWN, buff=0.3)
-        self.play(FadeIn(ai_label), FadeIn(opp_label), run_time=0.2)
+        self.play(FadeIn(ai_label), FadeIn(opp_label), run_time=0.1)
 
         ai_options = VGroup(*[self._mini_token(move) for move in ALL_MOVES]).arrange(RIGHT, buff=0.2)
         ai_options.next_to(ai_label, RIGHT, buff=0.3)
         opp_options = VGroup(*[self._mini_token(move) for move in ALL_MOVES]).arrange(RIGHT, buff=0.2)
         opp_options.next_to(opp_label, RIGHT, buff=0.3)
-        self.play(FadeIn(ai_options), FadeIn(opp_options), run_time=0.2)
+        self.play(FadeIn(ai_options), FadeIn(opp_options), run_time=0.1)
 
-        for _ in range(3):
-            self.play(ai_options.animate.set_opacity(0.3), opp_options.animate.set_opacity(0.3), run_time=0.1)
-            self.play(ai_options.animate.set_opacity(1), opp_options.animate.set_opacity(1), run_time=0.1)
+    
+        self.play(ai_options.animate.set_opacity(0.3), opp_options.animate.set_opacity(0.3), run_time=0.1)
+        self.play(ai_options.animate.set_opacity(1), opp_options.animate.set_opacity(1), run_time=0.1)
 
         ai_selected = self._mini_token(final_ai_move).next_to(ai_label, RIGHT, buff=0.3).scale(1.2)
         opp_selected = self._mini_token(final_opp_move).next_to(opp_label, RIGHT, buff=0.3).scale(1.2)
-        self.play(Transform(ai_options, ai_selected), Transform(opp_options, opp_selected), run_time=0.3)
+        self.play(Transform(ai_options, ai_selected), Transform(opp_options, opp_selected), run_time=0.15)
 
-        self.wait(0.2)
-        self.play(FadeOut(ai_label), FadeOut(opp_label), FadeOut(ai_options), FadeOut(opp_options), run_time=0.2)
+        self.wait(0.1)
+        self.play(FadeOut(ai_label), FadeOut(opp_label), FadeOut(ai_options), FadeOut(opp_options), run_time=0.1)
 
     def _mini_token(self, move):
         circle = Circle(radius=0.25, color=MOVE_COLOR[move], fill_opacity=0.3).set_stroke(width=2)

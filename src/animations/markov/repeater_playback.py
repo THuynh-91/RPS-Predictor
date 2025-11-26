@@ -2,10 +2,10 @@ from manim import *
 import pandas as pd
 import ast
 
-DATA_FILE = "../results/results_markov_vs_random.csv"
+DATA_FILE = "../results/results_markov_vs_repeater.csv"
 SHOW_ROUNDS = 2001
-ANIMATED_ROUNDS = 3
-FINAL_ROUND = 2001
+ANIMATED_ROUNDS = 5 # Rounds that actually get animated... so first 5 rounds
+FINAL_ROUND = 2001 # Gets full animation
 UPDATE_INTERVAL = 10
 ROW_GAP = 0.35
 
@@ -20,7 +20,7 @@ class RPSPlayback(Scene):
         df = pd.read_csv(DATA_FILE).head(SHOW_ROUNDS)
 
         # Title
-        title = Text("Markov vs Random (2k rounds)", font_size=36)
+        title = Text("Markov vs Repeater (2k rounds)", font_size=36)
         title.to_edge(UP, buff=0.4)
         self.add(title)
 
@@ -207,10 +207,10 @@ class RPSPlayback(Scene):
                         markov_viz.become(new_markov_viz)
 
                 new_scoreboard = self._scoreboard(win_tracker, loss_tracker, tie_tracker)
-                new_scoreboard.move_to(scoreboard)
+                new_scoreboard.next_to(title, DOWN, buff=0.5).to_edge(LEFT, buff=0.5)
                 
                 new_group = get_win_rate_group()
-                new_group.move_to(win_rate_group)
+                new_group.to_edge(DOWN + RIGHT, buff=0.4)
                 
                 if is_animated:
                     self.play(
@@ -300,7 +300,7 @@ class RPSPlayback(Scene):
                             entry.target.next_to(header_entry, DOWN, buff=0.15 + i * ROW_GAP)
                             animations.append(Transform(entry, entry.target))
                         animations.append(FadeOut(old_entry))
-                        self.play(*animations, run_time=0.3)
+                        self.play(*animations, run_time=0.15)
                     else:
                         for i, entry in enumerate(move_history[1:], start=0):
                             entry.next_to(header_entry, DOWN, buff=0.15 + i * ROW_GAP)
@@ -450,25 +450,25 @@ class RPSPlayback(Scene):
 
     def _show_selection(self, round_txt, final_ai_move, final_opp_move):
         ai_label = Text("AI (Markov):", font_size=24, color=YELLOW).next_to(round_txt, DOWN, buff=0.5)
-        opp_label = Text("Opponent (Random):", font_size=24, color=YELLOW).next_to(ai_label, DOWN, buff=0.3)
-        self.play(FadeIn(ai_label), FadeIn(opp_label), run_time=0.2)
+        opp_label = Text("Opponent (Repeater):", font_size=24, color=YELLOW).next_to(ai_label, DOWN, buff=0.3)
+        self.play(FadeIn(ai_label), FadeIn(opp_label), run_time=0.1)
 
         ai_options = VGroup(*[self._mini_token_anim(move) for move in ALL_MOVES]).arrange(RIGHT, buff=0.2)
         ai_options.next_to(ai_label, RIGHT, buff=0.3)
         opp_options = VGroup(*[self._mini_token_anim(move) for move in ALL_MOVES]).arrange(RIGHT, buff=0.2)
         opp_options.next_to(opp_label, RIGHT, buff=0.3)
-        self.play(FadeIn(ai_options), FadeIn(opp_options), run_time=0.2)
+        self.play(FadeIn(ai_options), FadeIn(opp_options), run_time=0.1)
 
-        for _ in range(3):
-            self.play(ai_options.animate.set_opacity(0.3), opp_options.animate.set_opacity(0.3), run_time=0.1)
-            self.play(ai_options.animate.set_opacity(1), opp_options.animate.set_opacity(1), run_time=0.1)
+        
+        self.play(ai_options.animate.set_opacity(0.3), opp_options.animate.set_opacity(0.3), run_time=0.1)
+        self.play(ai_options.animate.set_opacity(1), opp_options.animate.set_opacity(1), run_time=0.1)
 
         ai_selected = self._mini_token_anim(final_ai_move).next_to(ai_label, RIGHT, buff=0.3).scale(1.2)
         opp_selected = self._mini_token_anim(final_opp_move).next_to(opp_label, RIGHT, buff=0.3).scale(1.2)
-        self.play(Transform(ai_options, ai_selected), Transform(opp_options, opp_selected), run_time=0.3)
+        self.play(Transform(ai_options, ai_selected), Transform(opp_options, opp_selected), run_time=0.15)
 
-        self.wait(0.2)
-        self.play(FadeOut(ai_label), FadeOut(opp_label), FadeOut(ai_options), FadeOut(opp_options), run_time=0.2)
+        self.wait(0.1)
+        self.play(FadeOut(ai_label), FadeOut(opp_label), FadeOut(ai_options), FadeOut(opp_options), run_time=0.1)
 
     def _mini_token_anim(self, move):
         circle = Circle(radius=0.25, color=MOVE_COLOR[move], fill_opacity=0.3).set_stroke(width=2)

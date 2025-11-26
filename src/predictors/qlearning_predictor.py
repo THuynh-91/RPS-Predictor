@@ -162,6 +162,9 @@ class QLearningPredictor(RPSPredictor):
         return f"Q_RPS_ep*_g{self.gamma}_d{self.decay_rate}.pickle"
 
     def save_q_table(self):
+        save = input("Would you like to save the trained Q-table? (Y/N): ")
+        if save.lower() != 'y':
+            return
         data = {
             "Q": {k: v.tolist() for k, v in self.q_table.items()},
             "N": {k: v.tolist() for k, v in self.n_updates.items()},

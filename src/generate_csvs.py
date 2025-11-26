@@ -56,12 +56,12 @@ if __name__ == "__main__":
     predictors = {
         "random": RandomPredictor,
         "markov": lambda: MarkovPredictor(order=3),
-        # Add RL here after...
+        "qlearning": lambda: QLearningPredictor(gamma=0.9, decay_rate=0.999, verbose=False),
     }
     players = {
-        #"random": RandomPlayer,
-        #"repeater": RepeaterPlayer,
-        #"counter": CounterMovePlayer,
+        "random": RandomPlayer,
+        "repeater": RepeaterPlayer,
+        "counter": CounterMovePlayer,
         "fizzbuzz": FizzBuzzPlayer
     }
 
@@ -70,9 +70,12 @@ if __name__ == "__main__":
 
     for p_name, p_ctor in predictors.items():
         for pl_name, pl_ctor in players.items():
+            model = p_ctor()
+            if p_name == "qlearning":
+                model.train_against(pl_ctor(), episodes=10000)
             fname = os.path.join(output_dir, f"results_{p_name}_vs_{pl_name}.csv")
             print(f"{p_name} vs {pl_name}")
-            df = simulate_predictor_vs_player(p_ctor, pl_ctor, num_games=100000, to_csv=fname)
+            df = simulate_predictor_vs_player(model, pl_ctor, num_games=100000, to_csv=fname)
             last = df.iloc[-1]
             print(f"  Model wins: {last['cum_model_wins']} | Player wins: {last['cum_player_wins']} | Ties: {last['cum_ties']}")
             print(f"  Saved to {fname}\n")

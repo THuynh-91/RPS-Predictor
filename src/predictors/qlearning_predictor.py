@@ -20,12 +20,14 @@ class QLearningPredictor(RPSPredictor):
     def __init__(self, alpha: float = None,
                  gamma: float = 0.9,
                  epsilon: float = 1.0,
-                 decay_rate: float = 0.99):
+                 decay_rate: float = 0.99,
+                 verbose: bool = True):
         super().__init__()
 
         self.gamma = gamma
         self.epsilon = epsilon
         self.decay_rate = decay_rate
+        self.verbose = verbose
 
         # q table: state (tuple of last 3 rounds) -> array of Q-values for each predicted move
         self.q_table: Dict[Optional[Tuple], np.ndarray] = {}
@@ -120,14 +122,14 @@ class QLearningPredictor(RPSPredictor):
 
         self.epsilon *= self.decay_rate
 
-    def train_against(self, opponent: Player, episodes: int, msgs=True):
+    def train_against(self, opponent: Player, episodes: int):
         """
         Train the Q-learner by playing against an opponent.
         """
         if self.trained:
             return
 
-        if msgs:
+        if self.verbose:
             print(f"[TRAIN] Training for {episodes} episodes...")
             print(f"[TRAIN] Initial epsilon: {self.epsilon:.4f}")
 
@@ -162,6 +164,8 @@ class QLearningPredictor(RPSPredictor):
         return f"Q_RPS_ep*_g{self.gamma}_d{self.decay_rate}.pickle"
 
     def save_q_table(self):
+        if not self.verbose:
+            return
         save = input("Would you like to save the trained Q-table? (Y/N): ")
         if save.lower() != 'y':
             return

@@ -44,13 +44,13 @@ class QLearningPredictor(RPSPredictor):
         if q_table_path:
             self.load_q_table(q_table_path)
 
-    def _get_state(self) -> Optional[Tuple]:
+    def _get_state(self) -> Tuple[Tuple[str, str], ...]:
         """
         Get current state from last 3 rounds of play.
         Returns tuple of last 3 (opponent_move, ai_move) pairs, or None if < 3 rounds.
         """
-        if len(self.game_history) < 3:
-            return None
+        if len(self.game_history) == 0:
+            return tuple()
 
         return tuple(self.game_history[-3:])
 
@@ -90,14 +90,13 @@ class QLearningPredictor(RPSPredictor):
         if self.prev_action_idx is None:
             return
 
-        predicted_move = self.IDX_TO_MOVE[self.prev_action_idx]
-        reward = 0
-        if predicted_move == opponent_move:
-            reward = 1  # correct
-        elif self.counter(predicted_move) == opponent_move:
-            reward = 0  # neutral
-        else:
-            reward = -1  # incorrect
+        result = self.get_result(opponent_move, ai_move)
+        reward = {
+            "win": +1,
+            "tie": 0,
+            "lose": -1
+        }[result]
+
 
         new_state = self._get_state()
 

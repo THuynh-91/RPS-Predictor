@@ -3,7 +3,7 @@ import pandas as pd
 
 DATA_FILE = "../results/results_random_vs_counter.csv"
 SHOW_ROUNDS = 2001  # Process through round 10001
-ANIMATED_ROUNDS = 3  # Animate first 5 rounds
+ANIMATED_ROUNDS = 5  # Animate first 5 rounds
 FINAL_ROUND = 2001  # Also animate the final round
 UPDATE_INTERVAL = 50  # Update visuals every N rounds during fast-forward
 ROW_GAP = 0.35

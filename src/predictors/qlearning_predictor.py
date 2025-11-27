@@ -127,7 +127,7 @@ class QLearningPredictor(RPSPredictor):
         Train the Q-learner by playing against an opponent.
         """
         if self.trained:
-            return
+            return []
 
         if self.verbose:
             print(f"[TRAIN] Training for {episodes} episodes...")
@@ -136,6 +136,8 @@ class QLearningPredictor(RPSPredictor):
         wins = 0
         losses = 0
         ties = 0
+
+        training_stats = []
 
         for ep in range(episodes):
             ai_move = self.predict()
@@ -150,12 +152,25 @@ class QLearningPredictor(RPSPredictor):
             else:
                 ties += 1
 
+            training_stats.append({
+                "round": ep + 1,
+                "model_move": ai_move,
+                "opponent_move": opp_move,
+                "model_prediction": None,
+                "result": result,
+                "cum_model_wins": wins,
+                "cum_player_wins": losses,
+                "cum_ties": ties
+            })
+
             opponent.observe(ai_move)
             self.update(opp_move, ai_move)
 
         self.epsilon = 0.0
         self.trained = True
         self.save_q_table()
+
+        return training_stats
 
     def _filename(self):
         return f"Q_RPS_ep{self.episodes}_g{self.gamma}_d{self.decay_rate}.pickle"

@@ -1,4 +1,5 @@
 from players.counter_move_player import CounterMovePlayer
+from players.model_agent import ModelAgent
 from players.random_player import RandomPlayer
 from players.repeater_player import RepeaterPlayer
 from players.fizzbuzz_player import FizzBuzzPlayer
@@ -71,13 +72,40 @@ if __name__ == "__main__":
     os.makedirs(output_dir, exist_ok=True)
 
     for p_name, p_ctor in predictors.items():
+        if p_name == "qlearning":
+            model1 = p_ctor()
+            model2 = p_ctor()
+            for _ in range(10000):
+                m1_move = model1.predict()
+                m2_move = model2.predict()
+                model1.update(m2_move, m1_move)
+                model2.update(m1_move, m2_move)
+                model1.epsilon = 0.0
+                model2.epsilon = 0.0
+            
+            fname = os.path.join(output_dir, "results_qlearning_vs_qlearning.csv")
+            modelPlayer = ModelAgent(model2)
+            df = simulate_predictor_vs_player(model1, lambda: modelPlayer, num_games=100000, to_csv=fname)
+
+            last = df.iloc[-1]
+            print(f"qlearning vs qlearning")
+            print(f"  Model1 wins: {last['cum_model_wins']} | "
+                f"Model2 wins: {last['cum_player_wins']} | "
+                f"Ties: {last['cum_ties']}")
+            print()
+
         for pl_name, pl_ctor in players.items():
             model = p_ctor()
             if p_name == "qlearning":
-                model.train_against(pl_ctor(), episodes=10000)
+                train_stats = model.train_against(pl_ctor(), episodes=10000)
             fname = os.path.join(output_dir, f"results_{p_name}_vs_{pl_name}.csv")
             print(f"{p_name} vs {pl_name}")
             df = simulate_predictor_vs_player(model, pl_ctor, num_games=100000, to_csv=fname)
+            if p_name == "qlearning":
+                df_train = pd.DataFrame.from_records(train_stats)
+                train_fname = os.path.join(output_dir, f"training_{p_name}_vs_{pl_name}.csv")
+                df_train.to_csv(train_fname, index=False)
+                print(f"  Training stats saved to {train_fname}")
             last = df.iloc[-1]
             print(f"  Model wins: {last['cum_model_wins']} | Player wins: {last['cum_player_wins']} | Ties: {last['cum_ties']}")
             print(f"  Saved to {fname}\n")

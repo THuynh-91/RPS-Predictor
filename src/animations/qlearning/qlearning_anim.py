@@ -2,11 +2,8 @@ from manim import *
 import pandas as pd
 import os
 
-PREDICTOR = "qlearning"
-OPPONENT = "counter"      # change as needed: "random", "repeater", "counter"
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_FILE = os.path.join("results", f"results_{PREDICTOR}_vs_{OPPONENT}.csv")
 
 SHOW_ROUNDS = 2001         # how many rows to read (you can reduce this)
 ANIMATED_ROUNDS = 5       # fully animate first N rounds
@@ -23,19 +20,28 @@ ALL_MOVES = ["R", "P", "S"]
 
 class RPSQLearningPlayback(Scene):
     def __init__(self, predictor="qlearning", opponent="counter", **kwargs):
-        self.PREDICTOR = predictor
-        self.OPPONENT = opponent
+        self.predictor = predictor
+        self.opponent = opponent
+        self.data_file = os.path.join("results", f"results_{self.predictor}_vs_{self.opponent}.csv")
         super().__init__(**kwargs)
 
     def construct(self):
-        # Load data safely
-        if not os.path.exists(DATA_FILE):
-            raise FileNotFoundError(f"CSV not found: {DATA_FILE}")
+        TRAIN_FILE = os.path.join("results", f"training_{self.predictor}_vs_{self.opponent}.csv")
 
-        df = pd.read_csv(DATA_FILE).head(SHOW_ROUNDS)
+        train_df = None
+        if os.path.exists(TRAIN_FILE):
+            train_df = pd.read_csv(TRAIN_FILE)
+        else:
+            print("Warning: No training CSV found. Skipping training animation.")
+
+        # Load data safely
+        if not os.path.exists(self.data_file):
+            raise FileNotFoundError(f"CSV not found: {self.data_file}")
+
+        df = pd.read_csv(self.data_file).head(SHOW_ROUNDS)
 
         # Title
-        title = Text(f"{PREDICTOR.capitalize()} vs {OPPONENT.capitalize()} ({SHOW_ROUNDS} rounds)", font_size=36)
+        title = Text(f"{self.predictor.capitalize()} vs {self.opponent.capitalize()} ({SHOW_ROUNDS} rounds)", font_size=36)
         title.to_edge(UP, buff=0.4)
         self.add(title)
 
@@ -76,11 +82,6 @@ class RPSQLearningPlayback(Scene):
 
         # Move history setup
         move_history_title, header_entry, move_history = self._setup_move_history(title)
-
-        # Center Win Rate big text
-        win_rate_center = Text("Win Rate: --%", font_size=24, color=GREEN)
-        win_rate_center.move_to(ORIGIN).shift(UP * 0.7)
-        self.add(win_rate_center)
 
         # Bottom-right Win-Rate fraction block
         def get_win_rate_group():
@@ -125,6 +126,63 @@ class RPSQLearningPlayback(Scene):
 
         # Fast forward indicator (center)
         ff_text = Text("Fast Forwarding...", font_size=32, color=YELLOW).move_to(ORIGIN)
+
+        # Training viz
+        if train_df is not None:
+            training_title = Text("Training Phase", font_size=32, color=YELLOW)
+            training_title.next_to(title, DOWN, buff=0.6)
+            self.play(FadeIn(training_title), run_time=0.5)
+
+            # Axes for training curve
+            train_axes = Axes(
+                x_range=[0, len(train_df), max(1, len(train_df)//10)],
+                y_range=[0, 100, 20],
+                x_length=6,
+                y_length=3,
+                tips=False,
+                axis_config={"color": GRAY, "include_numbers": False},
+            )
+            train_axes.next_to(training_title, DOWN, buff=0.5)
+
+            xlab = Text("Episodes", font_size=16).next_to(train_axes, DOWN, buff=0.2)
+            ylab = Text("Win %", font_size=16).rotate(90*DEGREES)
+            ylab.next_to(train_axes, LEFT, buff=0.2)
+            self.add(train_axes, xlab, ylab)
+
+            # rolling win % storage
+            WINDOW = 100
+            results = train_df["result"].tolist()
+
+            roll_win = []
+            for i in range(len(results)):
+                window = results[max(0, i - WINDOW + 1): i + 1]
+                wins = sum(1 for r in window if r == "win")
+                pct = 100 * wins / len(window)
+                roll_win.append(pct)
+
+            all_points = [train_axes.coords_to_point(i, pct) for i, pct in enumerate(roll_win)]
+    
+            training_line = VMobject(color=BLUE, stroke_width=3)
+            training_line.set_points_as_corners(all_points)
+            
+            # Animate it being drawn smoothly
+            self.play(Create(training_line), run_time=6)
+
+            # short pause before transitioning to match playback
+            self.wait(3.0)
+            self.play(
+                FadeOut(training_title), 
+                FadeOut(train_axes), 
+                FadeOut(xlab), 
+                FadeOut(ylab), 
+                FadeOut(training_line), 
+                run_time=0.6
+            )
+
+        # Center Win Rate big text
+        win_rate_center = Text("Win Rate: --%", font_size=24, color=GREEN)
+        win_rate_center.move_to(ORIGIN).shift(UP * 0.7)
+        self.add(win_rate_center)
 
         # Main loop over rounds
         for idx, row in df.iterrows():
@@ -321,8 +379,8 @@ class RPSQLearningPlayback(Scene):
         return move_history_title, header_entry, move_history
 
     def _show_selection(self, round_txt, final_ai_move, final_opp_move):
-        ai_label = Text(f"AI ({PREDICTOR.capitalize()}):", font_size=24, color=YELLOW).next_to(round_txt, DOWN, buff=0.5)
-        opp_label = Text(f"Opponent ({OPPONENT.capitalize()}):", font_size=24, color=YELLOW).next_to(ai_label, DOWN, buff=0.3)
+        ai_label = Text(f"AI ({self.predictor.capitalize()}):", font_size=24, color=YELLOW).next_to(round_txt, DOWN, buff=0.5)
+        opp_label = Text(f"Opponent ({self.opponent.capitalize()}):", font_size=24, color=YELLOW).next_to(ai_label, DOWN, buff=0.3)
         self.play(FadeIn(ai_label), FadeIn(opp_label), run_time=0.2)
 
         ai_options = VGroup(*[self._mini_token_anim(move) for move in ALL_MOVES]).arrange(RIGHT, buff=0.2)

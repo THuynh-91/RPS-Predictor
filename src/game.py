@@ -1,4 +1,5 @@
 from players.slight_bias_player import SlightBiasPlayer
+from players.human_player import HumanPlayer
 from predictors.random_predictor import RandomPredictor
 from predictors.markov_predictor import MarkovPredictor
 from predictors.qlearning_predictor import QLearningPredictor
@@ -30,13 +31,12 @@ class RPSGame:
         print("\nCommands:")
         print("  R, P, S - Make your move")
         print("  STATS   - Show statistics")
+        print("  RESET   - Resets history and stats")
         print("  Q       - Quit game\n")
 
         while rounds == 0 or self.round_number < rounds:
-            self.round_number += 1
             # Player Input
             user_input = self.player.get_move()
-            print(f"Round {self.round_number}: You played {user_input}")
 
             if user_input == "Q":
                 print("\n" + "="*50)
@@ -48,19 +48,27 @@ class RPSGame:
             elif user_input == "STATS":
                 self._show_stats()
                 # This doesn't count as a round
-                self.round_number -= 1
+                continue
+
+            elif user_input == "AUTO":
+                # fast-forward: R P S sequence 10 times
+                self._auto_play_rps_sequence(cycles=10)
+                continue
+
+            elif user_input == "RESET":
+                self._reset_game()
                 continue
 
             elif user_input not in ['R', 'P', 'S']:
                 print("INVALID INPUT! Use R, P, or S\n")
-                self.round_number -= 1
                 continue
+            self.round_number += 1
+            print(f"Round {self.round_number}: You played {user_input}")
 
             ai_move = self.predictor.predict()
             self.predictor.update(user_input, ai_move)
             self.player.observe(ai_move)
             self._show_round_result(user_input, ai_move)
-            self.predictor._record_round(user_input, ai_move)
 
     def _show_round_result(self, player_move, ai_move):
         symbols = {
@@ -96,10 +104,44 @@ class RPSGame:
         print(f" Your Win Rate:  {stats['player_win_rate_percent']}")
         print("="*50 + "\n")
 
+    def _auto_play_rps_sequence(self, cycles: int = 10):
+        """
+        Fast-forward demo:
+        Plays the sequence R, P, S for `cycles` times,
+        updating the predictor each round.
+        """
+        seq = ['R', 'P', 'S']
+        print(f"\n[Auto-play] Playing sequence {' '.join(seq)} x {cycles}...\n")
+
+        for _ in range(cycles):
+            for move in seq:
+                self.round_number += 1
+                print(f"[Auto] Round {self.round_number}: You played {move}")
+                ai_move = self.predictor.predict()
+                self.predictor.update(move, ai_move)
+                self.player.observe(ai_move)
+                self._show_round_result(move, ai_move)
+
+        print("\n[Auto-play] Finished R P S sequence.\n")
+
+    def _reset_game(self):
+        print("\n[Reset] Clearing game history and model state...\n")
+
+        # Reset round counter
+        self.round_number = 0
+
+        if hasattr(self.predictor, "reset"):
+            self.predictor.reset()
+
+        print("[Reset] Game and model have been reset. Start playing!\n")
+
+
     def _show_final_stats(self):
         # Shows final stats when game ends
         stats = self.predictor.get_stats()
         
+        print("\n" + "="*50)
+        print(" "* (25 - len("FINAL STATISTICS")//2) + "FINAL STATISTICS")
         print(f"Model: {self.predictor.__class__.__name__}")
         print(f"\nTotal Games Played: {stats['total_games']}")
         print(f"\nFinal Score:")
@@ -107,6 +149,7 @@ class RPSGame:
         print(f" You:   {stats['losses']} wins")
         print(f" Ties:  {stats['ties']}")
         print(f"\n Your Win Rate: {stats['player_win_rate_percent']}")
+        print("="*50 + "\n")
         
         # Determine overall winner
         if stats['wins'] > stats['losses']:
@@ -156,10 +199,9 @@ def main():
     else:
         print("Invalid choice")
 
-    player = SlightBiasPlayer()
+    player = HumanPlayer()
     game = RPSGame(player, predictor)
     game.play_interactive(100)
-    game._show_final_stats()
 
 
 

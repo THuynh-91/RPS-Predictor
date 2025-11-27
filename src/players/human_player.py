@@ -5,7 +5,7 @@ class HumanPlayer(Player):
 
     def get_move(self) -> str:
         move = ''
-        valid_moves = ['R', 'P', 'S']
+        valid_moves = ['R', 'P', 'S', 'Q', 'STATS', 'AUTO', 'RESET']
         while move not in valid_moves:
             move = input("Enter your move (R/P/S): ").strip().upper()
             if move not in valid_moves:

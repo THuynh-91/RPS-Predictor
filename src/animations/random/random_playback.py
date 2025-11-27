@@ -142,7 +142,7 @@ class RPSPlayback(Scene):
                 round_txt = Text(f"Round {round_num}", font_size=30)
                 round_txt.next_to(win_rate_center, DOWN, buff=0.5)
                 self.play(FadeIn(round_txt), run_time=0.3)
-                self._show_random_selection(round_txt, ai_move, opp_move)
+                self._show_selection(round_txt, ai_move, opp_move)
                 self.play(FadeOut(round_txt), run_time=0.2)
 
             # Update scoreboard counters (always)

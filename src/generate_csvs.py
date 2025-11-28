@@ -1,6 +1,7 @@
 from players.counter_move_player import CounterMovePlayer
 from players.model_agent import ModelAgent
 from players.random_player import RandomPlayer
+from players.markov_player import MarkovPlayer
 from players.repeater_player import RepeaterPlayer
 from players.fizzbuzz_player import FizzBuzzPlayer
 from players.slight_bias_player import SlightBiasPlayer
@@ -56,16 +57,17 @@ def simulate_predictor_vs_player(predictor_cls, player_cls, num_games=100000, to
 
 if __name__ == "__main__":
     predictors = {
-        "random": RandomPredictor,
+        #"random": RandomPredictor,
         "markov": lambda: MarkovPredictor(order=3),
-        "qlearning": lambda: QLearningPredictor(gamma=0.9, decay_rate=0.999, verbose=False),
+        #"qlearning": lambda: QLearningPredictor(gamma=0.9, decay_rate=0.999, verbose=False),
     }
     players = {
-        "random": RandomPlayer,
-        "repeater": RepeaterPlayer,
-        "counter": CounterMovePlayer,
-        "fizzbuzz": FizzBuzzPlayer,
-        "slightbias": SlightBiasPlayer
+        #"random": RandomPlayer,
+        #"repeater": RepeaterPlayer,
+        #"counter": CounterMovePlayer,
+        #"fizzbuzz": FizzBuzzPlayer,
+        #"slightbias": SlightBiasPlayer
+        "markov": lambda: MarkovPlayer(order=3)
     }
 
     output_dir = "results"  

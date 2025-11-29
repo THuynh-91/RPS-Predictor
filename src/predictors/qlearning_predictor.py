@@ -68,17 +68,17 @@ class QLearningPredictor(RPSPredictor):
             self.q_table[state] = np.zeros(3)
             self.n_updates[state] = np.zeros(3)
 
-        if random.random() < self.epsilon:
-            predicted_idx = random.randint(0, 2)
-        else:
-            predicted_idx = np.argmax(self.q_table[state])
+        action_idx = np.argmax(self.q_table[state]) \
+             if random.random() >= self.epsilon \
+             else random.randint(0, 2)
 
-        predicted_player_move = self.IDX_TO_MOVE[predicted_idx]
+        raw_ai_move = self.IDX_TO_MOVE[action_idx]
+
+        ai_move = self.counter(raw_ai_move)
+
         self.prev_state = state
-        self.prev_action_idx = predicted_idx
+        self.prev_action_idx = action_idx
 
-        # return counter move
-        ai_move = self.counter(predicted_player_move)
 
         return ai_move
 
